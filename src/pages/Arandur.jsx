@@ -7,7 +7,7 @@ const Arandur = () => {
     const [baseImage, setBaseImage] = useState(null);
     const [watermarkType, setWatermarkType] = useState('light'); // 'light' or 'dark'
 
-    const watermarkImage = watermarkType === 'light' ? '/arandur-light.png' : '/arandur-dark.png';
+    const watermarkImage = watermarkType === 'light' ? 'arandur-light.png' : 'arandur-dark.png';
 
     return (
         <>
