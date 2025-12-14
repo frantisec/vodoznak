@@ -15,6 +15,9 @@ a tento projekt se drží [Semantic Versioning](https://semver.org/lang/cs/).
 ### Changed
 - Corner mód - rohové vodoznaky se zobrazují v původní velikosti PNG souborů, napis.png se škáluje na 30% šířky základního obrázku - 2025-12-14 19:46
 
+### Fixed
+- Oprava inicializace pozice vodoznaku v WatermarkEditor - vodoznak se nyní správně umístí do levého dolního rohu i když se načte před základním obrázkem nebo když se změní textColor před načtením základního obrázku - 2025-12-14 19:50
+
 ### Changed
 - Arandur.jsx - přidán výběr mezi text a corner módem - 2025-12-14 19:40
 - CSS styly - přidány styly pro mode selector - 2025-12-14 19:40

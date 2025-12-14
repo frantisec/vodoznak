@@ -41,38 +41,28 @@ const WatermarkEditor = forwardRef(({ baseImage, watermarkImage, textColor, onRe
             const displayWidth = Math.min(maxDisplayWidth, img.width);
             const displayHeight = displayWidth / aspectRatio;
             
-            // Update position based on base image if available
-            const updatePosition = () => {
-                if (baseImageRef.current) {
-                    const imgHeight = baseImageRef.current.offsetHeight;
-                    setWatermarkState({
-                        width: displayWidth,
-                        height: displayHeight,
-                        x: 0,
-                        y: Math.max(0, imgHeight - displayHeight),
-                    });
-                    positionInitializedRef.current = true;
-                } else {
-                    setWatermarkState({
-                        width: displayWidth,
-                        height: displayHeight,
-                        x: 0,
-                        y: 0,
-                    });
-                    positionInitializedRef.current = true;
-                }
-            };
+            // Update size immediately
+            setWatermarkState(prev => ({
+                ...prev,
+                width: displayWidth,
+                height: displayHeight,
+            }));
             
-            if (baseImageRef.current && baseImageRef.current.complete) {
-                updatePosition();
-            } else {
-                setWatermarkState({
+            // Try to update position if base image is ready
+            // Don't set flag to true if base image isn't loaded yet
+            if (baseImageRef.current && baseImageRef.current.complete && baseImageRef.current.offsetHeight > 0) {
+                const imgHeight = baseImageRef.current.offsetHeight;
+                setWatermarkState(prev => ({
+                    ...prev,
                     width: displayWidth,
                     height: displayHeight,
                     x: 0,
-                    y: 0,
-                });
+                    y: Math.max(0, imgHeight - displayHeight),
+                }));
                 positionInitializedRef.current = true;
+            } else {
+                // Base image not ready yet - don't set flag, position will be updated when base image loads
+                positionInitializedRef.current = false;
             }
         };
         img.src = currentWatermarkSrc;
@@ -84,7 +74,7 @@ const WatermarkEditor = forwardRef(({ baseImage, watermarkImage, textColor, onRe
         
         // Initialize watermark position to bottom-left after image loads
         const updatePosition = () => {
-            if (baseImageRef.current && !positionInitializedRef.current) {
+            if (baseImageRef.current && baseImageRef.current.offsetHeight > 0 && !positionInitializedRef.current) {
                 const imgHeight = baseImageRef.current.offsetHeight;
                 setWatermarkState(prev => ({
                     ...prev,
@@ -96,10 +86,19 @@ const WatermarkEditor = forwardRef(({ baseImage, watermarkImage, textColor, onRe
         };
         
         if (baseImageRef.current) {
-            if (baseImageRef.current.complete) {
+            if (baseImageRef.current.complete && baseImageRef.current.offsetHeight > 0) {
                 updatePosition();
             } else {
-                baseImageRef.current.onload = updatePosition;
+                // Set up onload handler if image isn't loaded yet
+                const handleLoad = () => {
+                    updatePosition();
+                };
+                baseImageRef.current.addEventListener('load', handleLoad);
+                return () => {
+                    if (baseImageRef.current) {
+                        baseImageRef.current.removeEventListener('load', handleLoad);
+                    }
+                };
             }
         }
     }, [baseImage]);
@@ -171,6 +170,19 @@ const WatermarkEditor = forwardRef(({ baseImage, watermarkImage, textColor, onRe
                     alt="Base"
                     className="arandur-base-image"
                     draggable={false}
+                    onLoad={() => {
+                        // Update watermark position when base image finishes loading
+                        // This handles cases where watermark loaded before base image
+                        if (baseImageRef.current && baseImageRef.current.offsetHeight > 0 && !positionInitializedRef.current) {
+                            const imgHeight = baseImageRef.current.offsetHeight;
+                            setWatermarkState(prev => ({
+                                ...prev,
+                                x: 0,
+                                y: Math.max(0, imgHeight - prev.height),
+                            }));
+                            positionInitializedRef.current = true;
+                        }
+                    }}
                 />
                 <button className="arandur-close-btn" onClick={onReset}>
                     <img src="/8d4799bd3dd556197355afce189584e4bee6ab4b.svg" alt="Close" />
