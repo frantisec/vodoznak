@@ -7,6 +7,18 @@ a tento projekt se drží [Semantic Versioning](https://semver.org/lang/cs/).
 
 ## [Unreleased]
 
+### Added
+- Corner mód v Arandur módu - automatické umístění 5 vodoznaků na pevné pozice (logo-TL.png, star-TR.png, helmet-BL.png, tree-BR.png, napis.png) - 2025-12-14 19:40
+- Nová komponenta CornerWatermarkEditor.jsx pro corner mód - 2025-12-14 19:40
+- Výběr módu (Text/Corner) v Arandur módu - 2025-12-14 19:40
+
+### Changed
+- Corner mód - rohové vodoznaky se zobrazují v původní velikosti PNG souborů, napis.png se škáluje na 30% šířky základního obrázku - 2025-12-14 19:46
+
+### Changed
+- Arandur.jsx - přidán výběr mezi text a corner módem - 2025-12-14 19:40
+- CSS styly - přidány styly pro mode selector - 2025-12-14 19:40
+
 ## [0.1.0] - 2024-12-14
 
 ### Changed

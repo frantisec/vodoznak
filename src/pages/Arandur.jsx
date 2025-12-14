@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import WatermarkEditor from '../components/WatermarkEditor';
+import CornerWatermarkEditor from '../components/CornerWatermarkEditor';
 
 const Arandur = () => {
     const [baseImage, setBaseImage] = useState(null);
+    const [watermarkMode, setWatermarkMode] = useState('text'); // 'text' or 'corner'
     const [textColor, setTextColor] = useState('white'); // 'white' or 'black'
     const [isDragging, setIsDragging] = useState(false);
     const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
@@ -84,30 +86,59 @@ const Arandur = () => {
                 ) : (
                     <>
                         <div className="arandur-editor-controls">
-                            <div className="arandur-text-color-controls">
-                                <span className="arandur-text-color-label">Text color:</span>
-                                <div className="arandur-radio-group">
-                                    <label className="arandur-radio">
-                                        <input
-                                            type="radio"
-                                            name="textColor"
-                                            value="white"
-                                            checked={textColor === 'white'}
-                                            onChange={(e) => setTextColor(e.target.value)}
-                                        />
-                                        <span className="arandur-radio-label">White</span>
-                                    </label>
-                                    <label className="arandur-radio">
-                                        <input
-                                            type="radio"
-                                            name="textColor"
-                                            value="black"
-                                            checked={textColor === 'black'}
-                                            onChange={(e) => setTextColor(e.target.value)}
-                                        />
-                                        <span className="arandur-radio-label">Black</span>
-                                    </label>
+                            <div className="arandur-mode-controls">
+                                <div className="arandur-mode-selector">
+                                    <span className="arandur-mode-label">Mode:</span>
+                                    <div className="arandur-radio-group">
+                                        <label className="arandur-radio">
+                                            <input
+                                                type="radio"
+                                                name="watermarkMode"
+                                                value="text"
+                                                checked={watermarkMode === 'text'}
+                                                onChange={(e) => setWatermarkMode(e.target.value)}
+                                            />
+                                            <span className="arandur-radio-label">Text</span>
+                                        </label>
+                                        <label className="arandur-radio">
+                                            <input
+                                                type="radio"
+                                                name="watermarkMode"
+                                                value="corner"
+                                                checked={watermarkMode === 'corner'}
+                                                onChange={(e) => setWatermarkMode(e.target.value)}
+                                            />
+                                            <span className="arandur-radio-label">Corner</span>
+                                        </label>
+                                    </div>
                                 </div>
+                                {watermarkMode === 'text' && (
+                                    <div className="arandur-text-color-controls">
+                                        <span className="arandur-text-color-label">Text color:</span>
+                                        <div className="arandur-radio-group">
+                                            <label className="arandur-radio">
+                                                <input
+                                                    type="radio"
+                                                    name="textColor"
+                                                    value="white"
+                                                    checked={textColor === 'white'}
+                                                    onChange={(e) => setTextColor(e.target.value)}
+                                                />
+                                                <span className="arandur-radio-label">White</span>
+                                            </label>
+                                            <label className="arandur-radio">
+                                                <input
+                                                    type="radio"
+                                                    name="textColor"
+                                                    value="black"
+                                                    checked={textColor === 'black'}
+                                                    onChange={(e) => setTextColor(e.target.value)}
+                                                />
+                                                <span className="arandur-radio-label">Black</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="arandur-action-buttons">
                                 <button
@@ -138,12 +169,20 @@ const Arandur = () => {
                                 )}
                             </div>
                         </div>
-                        <WatermarkEditor
-                            ref={watermarkEditorRef}
-                            baseImage={baseImage}
-                            textColor={textColor}
-                            onReset={() => setBaseImage(null)}
-                        />
+                        {watermarkMode === 'text' ? (
+                            <WatermarkEditor
+                                ref={watermarkEditorRef}
+                                baseImage={baseImage}
+                                textColor={textColor}
+                                onReset={() => setBaseImage(null)}
+                            />
+                        ) : (
+                            <CornerWatermarkEditor
+                                ref={watermarkEditorRef}
+                                baseImage={baseImage}
+                                onReset={() => setBaseImage(null)}
+                            />
+                        )}
                         <Link to="/" className="arandur-back">← back to standard mode</Link>
                     </>
                 )}

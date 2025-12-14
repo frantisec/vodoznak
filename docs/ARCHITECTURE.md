@@ -1,6 +1,6 @@
 # Architektura projektu - Vodoznak
 
-**Poslední aktualizace:** 2024-12-14
+**Poslední aktualizace:** 2025-12-14
 
 ## Struktura projektu
 
@@ -12,7 +12,8 @@ Vodoznak/
 │   │   └── Arandur.jsx       # Arandur mód s přednastaveným logem
 │   ├── components/
 │   │   ├── ImageUploader.jsx # Komponenta pro nahrávání obrázků
-│   │   └── WatermarkEditor.jsx # Editor s drag & resize funkcionalitou
+│   │   ├── WatermarkEditor.jsx # Editor s drag & resize funkcionalitou
+│   │   └── CornerWatermarkEditor.jsx # Editor pro corner mód s pevnými pozicemi
 │   ├── styles/
 │   │   └── index.css         # Kompletní styling (glassmorphism design)
 │   ├── assets/
@@ -62,19 +63,26 @@ Vodoznak/
 **Účel:** Speciální mód pro Arandur branding  
 **Funkce:**
 - Drag & drop nahrávání fotografie
-- Volba barvy textu (bílá/černá)
-- Automatické generování Arandur vodoznaku
+- Volba módu (Text/Corner)
+- Volba barvy textu (bílá/černá) - pouze v text módu
+- Automatické generování Arandur vodoznaku (text mód)
+- Corner mód s 5 vodoznaky na pevných pozicích
 - Rychlý export
 
 **State management:**
 - `baseImage` - Data URL fotografie
-- `textColor` - 'white' nebo 'black'
+- `watermarkMode` - 'text' nebo 'corner'
+- `textColor` - 'white' nebo 'black' (pouze v text módu)
 - `isDragging` - stav drag & drop
 - `showDownloadSuccess` - notifikace o stažení
 
 **Refs:**
 - `fileInputRef` - reference na file input
-- `watermarkEditorRef` - reference na WatermarkEditor pro imperativní volání
+- `watermarkEditorRef` - reference na WatermarkEditor nebo CornerWatermarkEditor pro imperativní volání
+
+**Komponenty:**
+- WatermarkEditor (text mód)
+- CornerWatermarkEditor (corner mód)
 
 ### ImageUploader.jsx
 **Účel:** Univerzální komponenta pro nahrávání obrázků  
@@ -126,6 +134,38 @@ Vodoznak/
 5. Vykreslí vodoznak pomocí `ctx.drawImage()` s proper scaling
 6. Exportuje jako PNG
 
+### CornerWatermarkEditor.jsx
+**Účel:** Editor pro corner mód s automatickým umístěním 5 vodoznaků  
+**Props:**
+- `baseImage` - Data URL hlavní fotografie (required)
+- `onReset` - callback pro reset
+- `ref` - pro imperativní volání download metody
+
+**Funkce:**
+- Automatické umístění 5 vodoznaků na pevné pozice:
+  - `logo-TL.png` → levý horní roh
+  - `star-TR.png` → pravý horní roh
+  - `helmet-BL.png` → levý spodní roh
+  - `tree-BR.png` → pravý spodní roh
+  - `napis.png` → vycentrován na spodek
+- Použití původní velikosti PNG souborů pro rohové vodoznaky, napis.png se škáluje na 30% šířky základního obrázku
+- Canvas API export v plné kvalitě se všemi vodoznaky
+
+**State management:**
+- `watermarkSizes` - velikosti a aspect ratio jednotlivých vodoznaků
+- `baseImageSize` - zobrazená velikost základní fotografie
+
+**Refs:**
+- `baseImageRef` - reference na img element pro naturalWidth/Height
+
+**Export logika:**
+1. Vytvoří canvas s naturalWidth/Height základní fotografie
+2. Vykreslí základní fotografii
+3. Vypočítá scale faktor mezi zobrazenou a skutečnou velikostí
+4. Načte všechny 5 vodoznaků paralelně
+5. Vykreslí každý vodoznak na správné pozici pomocí `ctx.drawImage()` s proper scaling
+6. Exportuje jako PNG
+
 ## Routing
 - `/` - Standardní režim (Home.jsx)
 - `/arandur` - Arandur mód (Arandur.jsx)
@@ -161,11 +201,20 @@ User → ImageUploader → FileReader → Data URL → Home state → WatermarkE
 ```
 
 ### Arandur mód:
+**Text mód:**
 ```
 User → Drag & Drop → FileReader → Data URL → Arandur state → WatermarkEditor → Canvas (s PNG vodoznakem) → Download
 ```
 
-**Poznámka:** Arandur vodoznak používá připravené PNG soubory (`arandur-light.png`, `arandur-dark.png`) místo dynamického generování, což zajišťuje konzistenci mezi preview a exportem.
+**Corner mód:**
+```
+User → Drag & Drop → FileReader → Data URL → Arandur state → CornerWatermarkEditor → Canvas (s 5 PNG vodoznaky) → Download
+```
+
+**Poznámka:** 
+- Text mód používá připravené PNG soubory (`arandur-light.png`, `arandur-dark.png`) místo dynamického generování
+- Corner mód používá 5 PNG souborů (`logo-TL.png`, `star-TR.png`, `helmet-BL.png`, `tree-BR.png`, `napis.png`) umístěných na pevné pozice
+- Oba módy zajišťují konzistenci mezi preview a exportem
 
 ## Bezpečnost
 - Vše se zpracovává lokálně v prohlížeči
