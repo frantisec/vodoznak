@@ -26,3 +26,14 @@ Tato aplikace slouží k jednoduchému a rychlému vkládání vodoznaků do fot
 -   React + Vite
 -   Canvas API
 -   Glassmorphism UI Design
+
+## Dokumentace
+
+Kompletní dokumentace projektu je v složce `docs/`:
+- [`docs/STATUS.md`](docs/STATUS.md) - Aktuální stav projektu a funkční stav
+- [`docs/TECHNOLOGY.md`](docs/TECHNOLOGY.md) - Použité technologie a jejich verze
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - Architektura a struktura projektu
+- [`docs/CONTEXT.md`](docs/CONTEXT.md) - Kontext a důležitá rozhodnutí
+- [`CHANGELOG.md`](CHANGELOG.md) - Historie změn projektu
+
+Dokumentace je automaticky udržována pomocí Cursor AI podle pravidel v `.cursorrules`.

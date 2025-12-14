@@ -542,6 +542,31 @@ a:hover {
   cursor: move !important;
 }
 
+.react-draggable {
+  cursor: move !important;
+}
+
+.react-draggable:hover {
+  cursor: move !important;
+}
+
+.watermark-draggable {
+  cursor: move !important;
+}
+
+.watermark-draggable:hover {
+  cursor: move !important;
+}
+
+.watermark-draggable * {
+  pointer-events: none !important;
+}
+
+.watermark-draggable .react-resizable-handle,
+.watermark-draggable [class*="arandur-resize-handle"] {
+  pointer-events: all !important;
+}
+
 .react-resizable-handle {
   position: absolute;
   box-sizing: border-box;
@@ -558,21 +583,25 @@ a:hover {
 .arandur-resize-handle-top,
 .arandur-resize-handle-bottom {
   cursor: ns-resize !important;
+  pointer-events: all !important;
 }
 
 .arandur-resize-handle-left,
 .arandur-resize-handle-right {
   cursor: ew-resize !important;
+  pointer-events: all !important;
 }
 
 .arandur-resize-handle-top-left,
 .arandur-resize-handle-bottom-right {
   cursor: nwse-resize !important;
+  pointer-events: all !important;
 }
 
 .arandur-resize-handle-top-right,
 .arandur-resize-handle-bottom-left {
   cursor: nesw-resize !important;
+  pointer-events: all !important;
 }
 
 .react-resizable-handle-se {

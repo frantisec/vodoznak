@@ -1,0 +1,53 @@
+# Dokumentační pravidla pro Vodoznak projekt
+
+## Automatická aktualizace dokumentace
+
+Při každé změně kódu MUSÍŠ automaticky:
+
+1. **Aktualizovat CHANGELOG.md**
+   - Přidat nový záznam s datem a časem, popisem změny a seznamem změněných souborů
+   - Formát položky: `- Popis změny - YYYY-MM-DD HH:MM`
+   - Formát hlavní verze: `## [X.Y.Z] - YYYY-MM-DD`
+   - Sekce: Added, Changed, Fixed, Removed
+   - Vždy zahrnout čas ve formátu HH:MM (24hodinový formát) u každé změny
+   - Pokud je více změn najednou, použij stejný čas pro všechny
+
+2. **Aktualizovat docs/TECHNOLOGY.md**
+   - Aktualizovat seznam použitých technologií pokud se přidaly nové závislosti
+   - Aktualizovat verze pokud se změnily
+   - Přidat poznámky o použití
+
+3. **Aktualizovat docs/ARCHITECTURE.md**
+   - Popsat změny ve struktuře projektu
+   - Aktualizovat popis komponent pokud se změnily
+   - Zaznamenat nové soubory nebo složky
+
+4. **Aktualizovat docs/STATUS.md**
+   - Aktualizovat aktuální stav projektu
+   - Zaznamenat nové funkce nebo opravy
+   - Aktualizovat datum poslední změny
+
+5. **Aktualizovat docs/CONTEXT.md**
+   - Zaznamenat důležitá rozhodnutí
+   - Vysvětlit "proč" ne jen "co"
+   - Udržovat historii změn
+
+6. **Aktualizovat README.md**
+   - Pokud se změnily instrukce nebo funkce
+   - Aktualizovat seznam funkcí
+
+## Formát dokumentace
+
+- Používej Markdown
+- Buď konkrétní a stručný
+- Zahrnuj příklady kódu pokud je to relevantní
+- Udržuj chronologický pořádek v CHANGELOG
+- Používej datum a čas ve formátu YYYY-MM-DD HH:MM (24hodinový formát)
+
+## Context udržování
+
+- Při každé konverzaci aktualizuj docs/CONTEXT.md s důležitými rozhodnutími
+- Zaznamenávej "proč" ne jen "co"
+- Udržuj historii důležitých změn
+- Pokud uživatel klade otázky o stavu, automaticky aktualizuj STATUS.md
+

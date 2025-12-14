@@ -1,27 +1,97 @@
 import React, { useRef, useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Rnd } from 'react-rnd';
 
-const WatermarkEditor = forwardRef(({ baseImage, textColor, onReset }, ref) => {
+const WatermarkEditor = forwardRef(({ baseImage, watermarkImage, textColor, onReset }, ref) => {
     const [watermarkState, setWatermarkState] = useState({
-        width: 514,
-        height: 211,
+        width: 400,
+        height: 164,
         x: 0,
         y: 0,
     });
+    const [watermarkAspectRatio, setWatermarkAspectRatio] = useState(400 / 164);
 
     const baseImageRef = useRef(null);
     const watermarkRef = useRef(null);
+    const watermarkImageRef = useRef(watermarkImage);
+    const positionInitializedRef = useRef(false);
+    
+    // Determine the watermark source - either uploaded or Arandur PNG
+    const arandurWatermarkSrc = textColor === 'white' 
+        ? '/arandur-light.png' 
+        : '/arandur-dark.png';
+    
+    const currentWatermarkSrc = watermarkImage || arandurWatermarkSrc;
+    
+    // Keep ref in sync with prop
+    useEffect(() => {
+        watermarkImageRef.current = watermarkImage;
+    }, [watermarkImage]);
+
+    // Load watermark image dimensions when watermark source changes
+    useEffect(() => {
+        positionInitializedRef.current = false; // Reset flag when watermark changes
+        
+        const img = new Image();
+        img.onload = () => {
+            const aspectRatio = img.width / img.height;
+            setWatermarkAspectRatio(aspectRatio);
+            // Initialize size based on watermark dimensions, but keep reasonable defaults
+            // Scale to fit nicely on screen (max 400px width)
+            const maxDisplayWidth = 400;
+            const displayWidth = Math.min(maxDisplayWidth, img.width);
+            const displayHeight = displayWidth / aspectRatio;
+            
+            // Update position based on base image if available
+            const updatePosition = () => {
+                if (baseImageRef.current) {
+                    const imgHeight = baseImageRef.current.offsetHeight;
+                    setWatermarkState({
+                        width: displayWidth,
+                        height: displayHeight,
+                        x: 0,
+                        y: Math.max(0, imgHeight - displayHeight),
+                    });
+                    positionInitializedRef.current = true;
+                } else {
+                    setWatermarkState({
+                        width: displayWidth,
+                        height: displayHeight,
+                        x: 0,
+                        y: 0,
+                    });
+                    positionInitializedRef.current = true;
+                }
+            };
+            
+            if (baseImageRef.current && baseImageRef.current.complete) {
+                updatePosition();
+            } else {
+                setWatermarkState({
+                    width: displayWidth,
+                    height: displayHeight,
+                    x: 0,
+                    y: 0,
+                });
+                positionInitializedRef.current = true;
+            }
+        };
+        img.src = currentWatermarkSrc;
+    }, [currentWatermarkSrc]);
 
     useEffect(() => {
+        // Reset flag when baseImage changes to allow re-initialization
+        positionInitializedRef.current = false;
+        
         // Initialize watermark position to bottom-left after image loads
         const updatePosition = () => {
-            if (baseImageRef.current) {
+            if (baseImageRef.current && !positionInitializedRef.current) {
                 const imgHeight = baseImageRef.current.offsetHeight;
                 setWatermarkState(prev => ({
                     ...prev,
-                    x: 24,
-                    y: Math.max(0, imgHeight - prev.height - 24),
+                    x: 0,
+                    y: Math.max(0, imgHeight - prev.height),
                 }));
+                positionInitializedRef.current = true;
             }
         };
         
@@ -51,108 +121,38 @@ const WatermarkEditor = forwardRef(({ baseImage, textColor, onReset }, ref) => {
         // Calculate scale factor between displayed image and natural image
         const scale = baseImg.naturalWidth / baseImg.offsetWidth;
 
-        // Calculate actual content size (without padding) - this is what's displayed on screen
-        const contentWidth = watermarkState.width - 48; // 24px padding on each side
-        const contentHeight = watermarkState.height - 48;
-        
-        // Calculate scale factor for watermark content (how much it's scaled from original)
-        const contentScaleX = contentWidth / 514;
-        const contentScaleY = contentHeight / 211;
+        // Calculate watermark position and size on the canvas
+        const wmX = watermarkState.x * scale;
+        const wmY = watermarkState.y * scale;
+        const wmW = watermarkState.width * scale;
+        const wmH = watermarkState.height * scale;
 
-        // Calculate watermark position and size on the canvas (accounting for padding)
-        // Position includes padding offset
-        const wmX = (watermarkState.x + 24) * scale;
-        const wmY = (watermarkState.y + 24) * scale;
-        // Size is the actual displayed content size scaled to natural image size
-        const wmW = contentWidth * scale;
-        const wmH = contentHeight * scale;
-
-        // Create a temporary canvas for the watermark with original size
-        // We'll scale it when drawing to match the displayed size
-        const watermarkCanvas = document.createElement('canvas');
-        watermarkCanvas.width = 514;
-        watermarkCanvas.height = 211;
-        const wmCtx = watermarkCanvas.getContext('2d');
-
-        // Set text color
-        const textColorValue = textColor === 'white' ? '#ffffff' : '#222222';
-        wmCtx.fillStyle = textColorValue;
+        // Load and draw watermark PNG (works for both uploaded and Arandur watermarks)
+        const watermarkImg = new Image();
+        watermarkImg.crossOrigin = "anonymous";
+        watermarkImg.src = currentWatermarkSrc;
         
-        // Load and draw icon
-        const iconImg = new Image();
-        iconImg.crossOrigin = "anonymous";
-        iconImg.src = '/b3f3659a713d98b15ed8366954ed297c9b866f6f.png';
-        
-        iconImg.onload = () => {
-            // Draw icon (scaled to 514x211 dimensions)
-            const iconWidth = 106.7;
-            const iconHeight = 140.4;
-            wmCtx.drawImage(iconImg, 0, 22.1, iconWidth, iconHeight);
+        watermarkImg.onload = () => {
+            // Draw the watermark on the main canvas with proper scaling
+            ctx.drawImage(watermarkImg, wmX, wmY, wmW, wmH);
             
-            // Load and draw stars
-            const starImg = new Image();
-            starImg.crossOrigin = "anonymous";
-            starImg.src = '/921604d5824bdc5a07796a06d6a8af6897dbca4d.png';
+            // Trigger download
+            const link = document.createElement('a');
+            link.download = 'watermarked-image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
             
-            starImg.onload = () => {
-                // Draw stars (scaled to 514x211 dimensions)
-                const starSize = 21.6;
-                wmCtx.drawImage(starImg, 40.9, 0, starSize, starSize);
-                wmCtx.drawImage(starImg, 76.0, 20.8, starSize, starSize);
-                wmCtx.drawImage(starImg, 4.9, 20.8, starSize, starSize);
-                
-                // Wait for font to load
-                document.fonts.ready.then(() => {
-                    // Set font and draw "Arandur" text (scaled to 514x211 dimensions)
-                    wmCtx.font = '106.7px "Grenze Gotisch", serif';
-                    wmCtx.textBaseline = 'top';
-                    wmCtx.textAlign = 'left';
-                    wmCtx.fillText('Arandur', 106.7, 23.9);
-                    
-                    // Draw ".cz" text (scaled to 514x211 dimensions)
-                    wmCtx.font = '35.1px "Grenze Gotisch", serif';
-                    wmCtx.fillText('.cz', 419.1, 116.7);
-                    
-                    // Draw the watermark on the main canvas with proper scaling
-                    ctx.drawImage(watermarkCanvas, wmX, wmY, wmW, wmH);
-                    
-                    // Trigger download
-                    const link = document.createElement('a');
-                    link.download = 'watermarked-image.png';
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    
-                    // Call success callback if provided
-                    if (onSuccess) {
-                        setTimeout(() => onSuccess(), 100);
-                    }
-                }).catch(() => {
-                    // Fallback if font loading fails
-                    // Set font and draw "Arandur" text (scaled to 514x211 dimensions)
-                    wmCtx.font = '106.7px serif';
-                    wmCtx.textBaseline = 'top';
-                    wmCtx.textAlign = 'left';
-                    wmCtx.fillText('Arandur', 106.7, 23.9);
-                    
-                    // Draw ".cz" text (scaled to 514x211 dimensions)
-                    wmCtx.font = '35.1px serif';
-                    wmCtx.fillText('.cz', 419.1, 116.7);
-                    
-                    // Draw the watermark on the main canvas with proper scaling
-                    ctx.drawImage(watermarkCanvas, wmX, wmY, wmW, wmH);
-                    
-                    // Trigger download
-                    const link = document.createElement('a');
-                    link.download = 'watermarked-image.png';
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    
-                    // Call success callback if provided
-                    if (onSuccess) {
-                        setTimeout(() => onSuccess(), 100);
-                    }
-                });
-            };
+            // Call success callback if provided
+            if (onSuccess) {
+                setTimeout(() => onSuccess(), 100);
+            }
+        };
+        
+        watermarkImg.onerror = () => {
+            console.error('Failed to load watermark image');
+            if (onSuccess) {
+                setTimeout(() => onSuccess(), 100);
+            }
         };
     };
 
@@ -180,8 +180,13 @@ const WatermarkEditor = forwardRef(({ baseImage, textColor, onReset }, ref) => {
                     position={{ x: watermarkState.x, y: watermarkState.y }}
                     defaultSize={{ width: watermarkState.width, height: watermarkState.height }}
                     defaultPosition={{ x: watermarkState.x, y: watermarkState.y }}
+                    onDrag={(e, d) => {
+                        // Update position during drag for smooth movement
+                        setWatermarkState(prev => ({ ...prev, x: d.x, y: d.y }));
+                    }}
                     onDragStop={(e, d) => {
                         setWatermarkState(prev => ({ ...prev, x: d.x, y: d.y }));
+                        positionInitializedRef.current = true; // Mark as initialized after user drags
                     }}
                     onResize={(e, direction, ref, delta, position) => {
                         const width = ref.offsetWidth;
@@ -203,11 +208,14 @@ const WatermarkEditor = forwardRef(({ baseImage, textColor, onReset }, ref) => {
                             x: position.x,
                             y: position.y,
                         });
+                        positionInitializedRef.current = true; // Mark as initialized after user resizes
                     }}
                     bounds="parent"
-                    lockAspectRatio={514 / 211}
-                    minWidth={200}
-                    minHeight={Math.round(200 * (211 / 514))}
+                    lockAspectRatio={watermarkAspectRatio}
+                    minWidth={50}
+                    minHeight={Math.round(50 / watermarkAspectRatio)}
+                    enableResizing={true}
+                    disableDragging={false}
                     resizeHandleClasses={{
                         top: 'arandur-resize-handle-top',
                         right: 'arandur-resize-handle-right',
@@ -221,33 +229,25 @@ const WatermarkEditor = forwardRef(({ baseImage, textColor, onReset }, ref) => {
                     style={{
                         border: '3px dashed #00fff2',
                         cursor: 'move',
-                        padding: '24px',
                         boxSizing: 'border-box',
                         zIndex: 1,
+                        pointerEvents: 'all',
                     }}
+                    className="watermark-draggable"
                 >
-                    <div 
-                        ref={watermarkRef} 
-                        className={`arandur-watermark-content arandur-watermark-${textColor}`}
-                        style={{ 
-                            color: textColor === 'white' ? '#ffffff' : '#222222',
-                            transform: `scale(${(watermarkState.width - 48) / 514}, ${(watermarkState.height - 48) / 211})`,
-                            transformOrigin: 'top left',
-                            width: '514px',
-                            height: '211px',
+                    <img 
+                        ref={watermarkRef}
+                        src={currentWatermarkSrc}
+                        alt="Watermark"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            pointerEvents: 'none',
+                            userSelect: 'none',
                         }}
-                    >
-                        <div className="arandur-watermark-icon-wrapper">
-                            <img src="/b3f3659a713d98b15ed8366954ed297c9b866f6f.png" alt="Arandur icon" className="arandur-watermark-icon" />
-                            <img src="/921604d5824bdc5a07796a06d6a8af6897dbca4d.png" alt="Star" className="arandur-watermark-star star-1" />
-                            <img src="/921604d5824bdc5a07796a06d6a8af6897dbca4d.png" alt="Star" className="arandur-watermark-star star-2" />
-                            <img src="/921604d5824bdc5a07796a06d6a8af6897dbca4d.png" alt="Star" className="arandur-watermark-star star-3" />
-                        </div>
-                        <div className="arandur-watermark-text">
-                            <span className="arandur-watermark-text-main">Arandur</span>
-                            <span className="arandur-watermark-text-domain">.cz</span>
-                        </div>
-                    </div>
+                        draggable={false}
+                    />
                 </Rnd>
             </div>
     );
